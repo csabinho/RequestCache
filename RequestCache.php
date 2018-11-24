@@ -1,43 +1,10 @@
 <?php
-//
-class RequestCache
-{
-	protected static $curl;
-	protected static $db;
-	protected static $curl_request;
-	protected static $db_request;
-	
-	public static function init()
-	{
-		include("db_config.inc.php");
-		curl_reset();
-	}
-	public static function close()
-	{
-		curl_close(self::$curl);
-		self::$db=NULL;
-	}
-	
-	public static function get_curl_request()
-	{
-		return self::$curl_request;
-	}
-	public static function get_db_request()
-	{
-		return self::$db_request;
-	}
-	public static function curl_reset()
-	{
-		self::$curl=curl_init();
-		curl_setopt(self::$curl, CURLOPT_RETURNTRANSFER, true);
-	}
-	public static function my_curl_setopt(int $option , mixed $value)
-	{
-		curl_setopt(self::$curl,$option,$value);
-	}
+include_once("AbstractRequestCache.php");
+class RequestCache extends AbstractRequestCache
+{	
 	public static function is_cached(string $url, array $irrelevant_parameters=array())
 	{
-		$new_url=count($irrelevant_parameters)?get_clean_url($url,$irrelevant_parameters):$url;
+		$new_url=count($irrelevant_parameters)?self::get_clean_url($url,$irrelevant_parameters):$url;
 		$stmt=self::$db->prepare("SELECT id FROM RequestCache WHERE url=:url");
 		$stmt->execute(array(":url"=>$new_url));
 		
@@ -45,14 +12,14 @@ class RequestCache
 	}
 	public static function remove_from_cache(string $url, array $irrelevant_parameters=array())
 	{
-		$new_url=count($irrelevant_parameters)?get_clean_url($url,$irrelevant_parameters):$url;
+		$new_url=count($irrelevant_parameters)?self::get_clean_url($url,$irrelevant_parameters):$url;
 
 		$stmt=self::$db->prepare("DELETE FROM RequestCache WHERE url=:url");
 		$stmt->execute(array(":url"=>$new_url));
 	}
-	public static function query(string $url, array $irrelevant_parameters=array(),boolean $force_curl=false)
+	public static function query($url, $irrelevant_parameters=array(),$force_curl=false)
 	{
-		$new_url=count($irrelevant_parameters)?get_clean_url($url,$irrelevant_parameters):$url;
+		$new_url=count($irrelevant_parameters)?self::get_clean_url($url,$irrelevant_parameters):$url;
 		$stmt=self::$db->prepare("SELECT content FROM RequestCache WHERE url=:url");
 		$stmt->execute(array(":url"=>$new_url));
 		
